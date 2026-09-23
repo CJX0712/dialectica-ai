@@ -1,5 +1,12 @@
 # 辩衡 Dialectica
 
+<p align="center">
+  <a href="https://github.com/CJX0712/dialectica-ai/actions/workflows/ci.yml"><img src="https://github.com/CJX0712/dialectica-ai/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
+  <a href="https://github.com/CJX0712/dialectica-ai/releases"><img src="https://img.shields.io/github/v/release/CJX0712/dialectica-ai?sort=semver" alt="release"></a>
+  <a href="https://github.com/CJX0712/dialectica-ai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/CJX0712/dialectica-ai" alt="license"></a>
+  <img src="https://img.shields.io/badge/author-%E6%99%A8%E6%98%9F-1f6feb" alt="author">
+</p>
+
 **Deliberative multi-agent reasoning with evidence anchoring and provable convergence.**
 
 一个答案不应该只是模型一次性吐出的文本。辩衡把它变成一件**经过对抗式检验、每条断言都锚定到证据、且可以证明已收敛**的产物。
