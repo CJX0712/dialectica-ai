@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dialectica"
+version = "0.1.0"
+description = "辩衡 Dialectica - deliberative multi-agent reasoning with evidence anchoring and provable convergence"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "晨星" }]
+maintainers = [{ name = "晨星" }]
+keywords = ["rag", "agent", "multi-agent", "debate", "retrieval", "llm", "evidence"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "pydantic>=2.5",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "loguru>=0.7",
+]
+
+[project.optional-dependencies]
+prod = [
+  "faiss-cpu>=1.8",
+  "fastembed>=0.4",
+  "rank-bm25>=0.2",
+  "llama-cpp-python>=0.2",
+]
+dev = [
+  "pytest>=8.0",
+  "httpx>=0.27",
+  "ruff>=0.5",
+]
+ingest = [
+  "pypdf>=4.0",
+]
+
+[project.scripts]
+dialectica = "dialectica.cli:main"
+
+[project.urls]
+Repository = "https://github.com/CJX0712/dialectica-ai"
+
+[tool.setuptools.packages.find]
+where = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["src"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+exclude = [".git", "__pycache__", "dist", "build", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

@@ -1,0 +1,294 @@
+openapi: 3.1.0
+info:
+  title: Dialectica
+  summary: 辩衡 —— 辩证式多智能体推理服务
+  description: >
+    每次回答都经过四角色辩证协议，每条断言锚定到检索到的证据跨度，全过程可回放。
+    作者：晨星。
+  version: 0.1.0
+  contact:
+    name: 晨星
+  license:
+    name: MIT
+servers:
+  - url: http://127.0.0.1:8000
+    description: 本机默认
+
+paths:
+  /:
+    get:
+      summary: 端点清单
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name: { type: string }
+                  version: { type: string }
+                  author: { type: string }
+                  endpoints: { type: array, items: { type: string } }
+
+  /health:
+    get:
+      summary: 健康检查
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  chunks: { type: integer }
+                  llm: { type: string, example: mock }
+                  embedding: { type: string, example: HashingEmbedder }
+                  vector: { type: string, example: MemoryIndex }
+                  memory:
+                    type: object
+                    properties:
+                      working: { type: integer }
+                      episodic: { type: integer }
+                      semantic: { type: integer }
+                  settings:
+                    type: object
+                    properties:
+                      llm_backend: { type: string }
+                      embedding_backend: { type: string }
+                      vector_backend: { type: string }
+                      rerank_backend: { type: string }
+
+  /ingest:
+    post:
+      summary: 入库
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                docs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      text: { type: string }
+                      title: { type: string }
+                      source: { type: string }
+                texts:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chunks: { type: integer }
+                  documents: { type: integer }
+        "400":
+          description: 未提供任何文档
+
+  /reset:
+    post:
+      summary: 清空语料与记忆
+      responses:
+        "200":
+          description: OK
+
+  /debate:
+    post:
+      summary: 运行完整辩证协议
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string }
+                top_k: { type: integer, nullable: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DebateResponse"
+        "400":
+          description: empty_corpus
+        "503":
+          description: provider_unavailable
+
+  /debate/stream:
+    post:
+      summary: 同上，SSE 流式（evidence → round* → answer → done）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string }
+                top_k: { type: integer, nullable: true }
+      responses:
+        "200":
+          description: SSE 流
+          content:
+            text/event-stream:
+              schema: { type: string }
+
+  /ask:
+    post:
+      summary: 只要答案
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer: { type: string }
+
+  /trace:
+    get:
+      summary: 结构化事件
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 200 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trace_id: { type: string }
+                  events:
+                    type: array
+                    items: { type: object }
+
+  /evaluate:
+    post:
+      summary: 跑内置回归基准（每次在全新管道上）
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  passed: { type: integer }
+                  total: { type: integer }
+                  mean_faithfulness: { type: number }
+                  mean_answer_relevancy: { type: number }
+                  mean_context_precision: { type: number }
+                  mean_context_recall: { type: number }
+                  mean_keyword_recall: { type: number }
+                  cases:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        query: { type: string }
+                        metrics: { type: object }
+                        passed: { type: boolean }
+
+  /config:
+    get:
+      summary: 当前生效配置
+      responses:
+        "200":
+          description: OK
+
+components:
+  schemas:
+    Claim:
+      type: object
+      properties:
+        claim_id: { type: string }
+        text: { type: string }
+        verdict:
+          type: string
+          enum: [supported, unsupported, uncertain]
+        evidence:
+          type: array
+          items: { type: string }
+        support: { type: number }
+        anchored: { type: boolean }
+    Objection:
+      type: object
+      properties:
+        text: { type: string }
+        citations:
+          type: array
+          items: { type: string }
+        valid: { type: boolean }
+    Hit:
+      type: object
+      properties:
+        span_id: { type: string }
+        text: { type: string }
+        score: { type: number }
+        doc_id: { type: string }
+        title: { type: string }
+        components:
+          type: object
+          additionalProperties: { type: number }
+    Round:
+      type: object
+      properties:
+        index: { type: integer }
+        proposal: { type: string }
+        delta: { type: number }
+        claims:
+          type: array
+          items: { $ref: "#/components/schemas/Claim" }
+        objections:
+          type: array
+          items: { $ref: "#/components/schemas/Objection" }
+        valid_objections:
+          type: array
+          items: { $ref: "#/components/schemas/Objection" }
+        gap_queries:
+          type: array
+          items: { type: string }
+    DebateResponse:
+      type: object
+      properties:
+        answer: { type: string }
+        converged: { type: boolean }
+        metrics:
+          type: object
+          additionalProperties: { type: number }
+        claims:
+          type: array
+          items: { $ref: "#/components/schemas/Claim" }
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/Hit" }
+        rounds:
+          type: array
+          items: { $ref: "#/components/schemas/Round" }

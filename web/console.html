@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>辩衡 Dialectica · 辩证式推理控制台</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1a1d21; --muted:#6b7280;
+    --line:#e3e6ea; --accent:#2f5bd7; --accent-soft:#eef2fd;
+    --ok:#1f7a4d; --ok-soft:#e8f5ee; --warn:#a8600a; --warn-soft:#fdf1e0;
+    --bad:#b3261e; --bad-soft:#fdecec; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 22px;
+         display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+  header h1{margin:0;font-size:17px;letter-spacing:.3px}
+  header .sub{color:var(--muted);font-size:12px}
+  header .spacer{flex:1}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px}
+  .dot.on{background:var(--ok)} .dot.off{background:var(--bad)}
+  main{max-width:1240px;margin:0 auto;padding:18px 22px 60px}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+  @media(max-width:960px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+  input[type=text],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);
+    border-radius:7px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
+  textarea{min-height:120px;resize:vertical;font-family:var(--mono);font-size:12px;line-height:1.5}
+  button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:9px 14px;
+    font:inherit;font-size:13px;cursor:pointer}
+  button:hover{filter:brightness(1.06)}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .metrics{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .metric{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 13px;min-width:104px}
+  .metric .k{font-size:11px;color:var(--muted)}
+  .metric .v{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+  .round{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+  .round > .head{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  .round .idx{font-weight:700;font-size:13px}
+  .round .body{padding:12px 14px}
+  .tag{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .tag.ok{background:var(--ok-soft);color:var(--ok);border-color:#cfe8db}
+  .tag.bad{background:var(--bad-soft);color:var(--bad);border-color:#f2d3d1}
+  .tag.warn{background:var(--warn-soft);color:var(--warn);border-color:#f0dfc4}
+  .proposal{white-space:pre-wrap;background:#fbfcfd;border:1px solid var(--line);
+            border-radius:8px;padding:10px 12px;margin:8px 0 12px}
+  .claim{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed #eef0f3}
+  .claim:last-child{border-bottom:0}
+  .claim .txt{flex:1}
+  .claim .sup{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .obj{background:var(--warn-soft);border:1px solid #f0dfc4;border-radius:8px;padding:8px 11px;margin:6px 0;font-size:13px}
+  .obj.invalid{background:#f2f3f5;border-color:var(--line);color:var(--muted);text-decoration:line-through}
+  .obj code{font-family:var(--mono);font-size:11px;background:#fff;padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+  .ev{border-left:3px solid var(--accent);background:#fbfcfd;padding:8px 11px;margin:6px 0;border-radius:0 8px 8px 0}
+  .ev .sid{font-family:var(--mono);font-size:11px;color:var(--accent)}
+  .ev .sc{float:right;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .ev .tx{font-size:13px;color:#33383f;margin-top:3px}
+  .answer{background:var(--accent-soft);border:1px solid #d3ddf7;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+  .answer .lbl{font-size:11px;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+  .answer .txt{font-size:15px;line-height:1.7}
+  .empty{color:var(--muted);font-size:13px;padding:20px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+  .status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+  .status.err{color:var(--bad)}
+  .fl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .bar{height:6px;background:#eceef1;border-radius:4px;overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+  .bar i.d{background:var(--accent)} .bar i.s{background:#e0a458}
+  code.inline{font-family:var(--mono);font-size:12px;background:#f1f3f5;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>辩衡 Dialectica</h1>
+  <span class="sub">辩证式多智能体推理 · 证据锚定 · 收敛可证</span>
+  <span class="spacer"></span>
+  <span class="fl"><span class="dot" id="dot"></span><span id="conn">未连接</span></span>
+  <span class="fl">作者：晨星</span>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- 左栏：配置与语料 -->
+    <div>
+      <div class="card">
+        <h2>服务</h2>
+        <label>API 地址</label>
+        <input type="text" id="base" value="http://127.0.0.1:8000" />
+        <div class="row">
+          <button class="ghost" id="btnHealth">健康检查</button>
+          <button class="ghost" id="btnDemo">载入示例语料</button>
+        </div>
+        <div class="status" id="health"></div>
+      </div>
+
+      <div class="card">
+        <h2>知识库</h2>
+        <label>每段之间用空行分隔</label>
+        <textarea id="corpus" placeholder="粘贴或载入语料…"></textarea>
+        <div class="row">
+          <button id="btnIngest">入库</button>
+          <button class="ghost" id="btnReset">清空</button>
+        </div>
+        <div class="status" id="ingestStatus"></div>
+      </div>
+
+      <div class="card">
+        <h2>提问</h2>
+        <label>问题（计算器/时间类查询会走确定性工具路由）</label>
+        <input type="text" id="query" placeholder="例如：沙箱里为什么无法安装 Python 包" />
+        <div class="row">
+          <button id="btnAsk">发起辩论</button>
+          <label class="fl" style="margin:0"><input type="checkbox" id="useSse" style="width:auto;margin:0" /> SSE 流式</label>
+        </div>
+        <div class="status" id="askStatus"></div>
+      </div>
+    </div>
+
+    <!-- 右栏：辩论过程 -->
+    <div>
+      <div class="metrics" id="metrics"></div>
+      <div id="answer"></div>
+      <div id="rounds"></div>
+      <div class="card" id="evCard" style="display:none">
+        <h2>证据跨度</h2>
+        <div id="evidence"></div>
+      </div>
+      <div class="empty" id="placeholder">左侧入库后提问，这里会展示每一轮提案、断言裁决、反对意见与收敛过程。</div>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var DEMO = [
+    "沙箱守卫会拦截对 site-packages 的写入与删除，pip install 会报 SAFE_DELETE_BULK_GUARD_ERROR。绕行方式是使用 pip install --target 指定目录，再通过 PYTHONPATH 加载。",
+    "机器上的 SOCKS5 代理会让 pip 报 Missing dependencies for SOCKS support，需要先安装 PySocks 再继续安装其它依赖。",
+    "npm registry 被指向了鸿蒙源 ohpm.openharmony.cn，缺少通用包。安装时需要显式指定 --registry=https://registry.npmmirror.com。",
+    "esbuild 的 postinstall 会被沙箱拦截，报 EBUSY spawnSync node.exe。使用 npm install --ignore-scripts 并显式补装平台原生包，版本必须与主包完全一致。",
+    "英文交叉编码器在中文查询上判别力不足，如果把重排顺序直接当作最终排序，会把正确答案压下去，实测 top-1 命中率从 11/12 掉到 5/12。护栏做法是对重排分数做 z-score 归一化，再与融合分数加权混合，边际不足时回退融合顺序。",
+    "Bash 里 coreutils 未初始化，mkdir / ls / dirname 会报 command not found。所有 shell 操作改用 PowerShell 工具完成。",
+    "PowerShell 的 Out-File 默认写 UTF-16LE，日志会被识别为二进制。一律使用 -Encoding utf8，或让 Python 自己写文件。",
+    "访问 localhost 的 httpx 客户端必须设置 trust_env=False，否则 SOCKS 代理会把本机流量也劫走，报 WinError 10054。"
+  ].join("\n\n");
+
+  function base() { return $("base").value.replace(/\/+$/, ""); }
+  function setConn(ok, text) {
+    $("dot").className = "dot " + (ok ? "on" : "off");
+    $("conn").textContent = text;
+  }
+  function status(id, msg, isErr) {
+    var el = $(id);
+    el.textContent = msg || "";
+    el.className = "status" + (isErr ? " err" : "");
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function call(path, body) {
+    return fetch(base() + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {})
+    }).then(function (r) {
+      return r.json().then(function (d) {
+        if (!r.ok) { throw new Error((d && d.detail) || ("HTTP " + r.status)); }
+        return d;
+      });
+    });
+  }
+
+  function renderMetrics(m, extra) {
+    var items = [
+      ["轮数", m.rounds != null ? m.rounds : "-"],
+      ["收敛", m.converged ? "是" : "否"],
+      ["忠实度", m.faithfulness != null ? m.faithfulness.toFixed(2) : "-"],
+      ["断言通过", (m.claims_anchored != null ? m.claims_anchored : 0) + "/" + (m.claims_total != null ? m.claims_total : 0)],
+      ["证据跨度", m.evidence_spans != null ? m.evidence_spans : "-"],
+      ["稳定性", m.stability != null ? m.stability.toFixed(2) : "-"]
+    ];
+    var html = items.map(function (it) {
+      return '<div class="metric"><div class="k">' + it[0] + '</div><div class="v">' + it[1] + "</div></div>";
+    }).join("");
+    var wd = m["retrieval_w_dense"], ws = m["retrieval_w_sparse"];
+    if (wd != null && ws != null) {
+      html += '<div class="metric" style="min-width:180px"><div class="k">自适应融合权重 dense / sparse</div>' +
+        '<div class="v" style="font-size:13px">' + wd.toFixed(2) + " / " + ws.toFixed(2) + "</div>" +
+        '<div class="bar" style="margin-top:5px"><i class="d" style="width:' + (wd * 100).toFixed(1) + '%"></i>' +
+        '<i class="s" style="width:' + (ws * 100).toFixed(1) + '%"></i></div></div>';
+    }
+    $("metrics").innerHTML = html + (extra || "");
+  }
+
+  function renderClaim(c) {
+    var ok = c.anchored || c.verdict === "supported";
+    return '<div class="claim"><span class="tag ' + (ok ? "ok" : "bad") + '">' +
+      (ok ? "已锚定" : "未锚定") + '</span><span class="txt">' + esc(c.text) +
+      '</span><span class="sup">' + (c.support != null ? c.support.toFixed(2) : "") +
+      (c.evidence && c.evidence.length ? " " + esc(c.evidence[0].replace("span::", "")) : "") +
+      "</span></div>";
+  }
+
+  function renderRound(r) {
+    var objs = (r.objections || []).map(function (o) {
+      var cite = (o.citations || []).map(function (s) { return "<code>" + esc(s) + "</code>"; }).join(" ");
+      return '<div class="obj' + (o.valid ? "" : " invalid") + '">' + (o.valid ? "有效反对" : "无效反对（无引用，已丢弃）") +
+        " " + cite + " · " + esc(o.text) + "</div>";
+    }).join("");
+    var claims = (r.claims || []).map(renderClaim).join("");
+    var delta = r.delta != null ? r.delta.toFixed(3) : "-";
+    var gaps = (r.gap_queries || []).length
+      ? '<div class="tag warn">证据缺口补检索：' + esc(r.gap_queries.join(" / ")) + "</div>" : "";
+    return '<div class="round"><div class="head"><span class="idx">第 ' + (r.index + 1) + " 轮</span>" +
+      '<span class="tag">语义变化 delta ' + delta + "</span>" + gaps + "</div>" +
+      '<div class="body"><div class="proposal">' + esc(r.proposal) + "</div>" +
+      (claims || '<div class="tag">无断言</div>') +
+      (objs || '<div class="tag ok">无有效反对，协议收敛</div>') +
+      "</div></div>";
+  }
+
+  function renderEvidence(list) {
+    if (!list || !list.length) { $("evCard").style.display = "none"; return; }
+    $("evCard").style.display = "";
+    $("evidence").innerHTML = list.map(function (h) {
+      var c = h.components || {};
+      var extra = [];
+      if (c.rerank_z != null) extra.push("rerank z " + c.rerank_z.toFixed(2));
+      if (c.fused != null) extra.push("fused " + c.fused.toFixed(4));
+      return '<div class="ev"><span class="sc">' + (h.score != null ? h.score.toFixed(4) : "") +
+        (extra.length ? " · " + extra.join(" · ") : "") + '</span>' +
+        '<span class="sid">' + esc(h.span_id) + "</span>" +
+        '<div class="tx">' + esc(h.text) + "</div></div>";
+    }).join("");
+  }
+
+  function render(data) {
+    $("placeholder").style.display = "none";
+    $("answer").innerHTML = '<div class="answer"><div class="lbl">最终答案</div><div class="txt">' +
+      esc(data.answer) + "</div></div>";
+    renderMetrics(data.metrics || {});
+    $("rounds").innerHTML = (data.rounds || []).map(renderRound).join("") ||
+      '<div class="empty">该查询走了确定性工具路由，未触发辩论。</div>';
+    renderEvidence(data.evidence || []);
+  }
+
+  function ask() {
+    var q = $("query").value.trim();
+    if (!q) { status("askStatus", "请输入问题", true); return; }
+    status("askStatus", "推理中…");
+    if ($("useSse").checked) {
+      $("placeholder").style.display = "none";
+      $("rounds").innerHTML = "";
+      $("answer").innerHTML = "";
+      fetch(base() + "/debate/stream", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q })
+      }).then(function (r) {
+        var reader = r.body.getReader(), dec = new TextDecoder("utf-8"), buf = "";
+        var acc = { rounds: [], evidence: [] };
+        function pump() {
+          return reader.read().then(function (res) {
+            if (res.done) { status("askStatus", "完成"); return; }
+            buf += dec.decode(res.value, { stream: true });
+            var parts = buf.split("\n\n"); buf = parts.pop();
+            parts.forEach(function (chunk) {
+              var ev = (chunk.match(/^event: (.+)$/m) || [])[1];
+              var dt = (chunk.match(/^data: (.+)$/m) || [])[1];
+              if (!ev || !dt) { return; }
+              var payload = JSON.parse(dt);
+              if (ev === "evidence") { acc.evidence = payload; renderEvidence(payload); }
+              else if (ev === "round") { acc.rounds.push(payload); $("rounds").innerHTML = acc.rounds.map(renderRound).join(""); }
+              else if (ev === "answer") {
+                $("answer").innerHTML = '<div class="answer"><div class="lbl">最终答案</div><div class="txt">' + esc(payload.answer) + "</div></div>";
+                renderMetrics(payload.metrics || {});
+              }
+            });
+            return pump();
+          });
+        }
+        return pump();
+      }).catch(function (e) {
+        setConn(false, "未连接");
+        status("askStatus", "请求失败：" + e.message + "（先用 python -m dialectica.cli serve 起服务）", true);
+      });
+      return;
+    }
+    call("/debate", { query: q }).then(function (data) {
+      render(data);
+      status("askStatus", "完成 · 收敛=" + (data.converged ? "是" : "否"));
+      setConn(true, "已连接");
+    }).catch(function (e) {
+      setConn(false, "未连接");
+      status("askStatus", "请求失败：" + e.message + "（先用 python -m dialectica.cli serve 起服务）", true);
+    });
+  }
+
+  $("btnHealth").onclick = function () {
+    status("health", "检查中…");
+    fetch(base() + "/health").then(function (r) { return r.json(); }).then(function (d) {
+      setConn(true, "已连接");
+      status("health", "LLM=" + d.llm + " · 嵌入=" + d.embedding + " · 向量=" + d.vector + " · 切片=" + d.chunks);
+    }).catch(function (e) {
+      setConn(false, "未连接");
+      status("health", "无法连接：" + e.message, true);
+    });
+  };
+  $("btnDemo").onclick = function () { $("corpus").value = DEMO; status("ingestStatus", "示例语料已载入，点击入库"); };
+  $("btnIngest").onclick = function () {
+    var blocks = $("corpus").value.split(/\n\s*\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!blocks.length) { status("ingestStatus", "语料为空", true); return; }
+    status("ingestStatus", "入库中…");
+    call("/ingest", { texts: blocks }).then(function (d) {
+      status("ingestStatus", "已入库 " + d.chunks + " 个切片");
+      setConn(true, "已连接");
+    }).catch(function (e) { status("ingestStatus", "入库失败：" + e.message, true); });
+  };
+  $("btnReset").onclick = function () {
+    call("/reset", {}).then(function () { status("ingestStatus", "已清空"); })
+      .catch(function (e) { status("ingestStatus", "清空失败：" + e.message, true); });
+  };
+  $("btnAsk").onclick = ask;
+  $("query").addEventListener("keydown", function (e) { if (e.key === "Enter") { ask(); } });
+  $("btnHealth").onclick();
+})();
+</script>
+</body>
+</html>

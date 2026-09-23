@@ -1,0 +1,17 @@
+# Dialectica 核心依赖（顶层钉版）。
+# 干净环境 `pip install -r requirements.txt` 即可跑通默认离线链路
+# （确定性 Mock LLM + 哈希嵌入 + 内存向量索引），无需 GPU、无需网络、无需 API Key。
+#
+# 生产级加速器见 requirements-prod.txt；开发/验证见 requirements-dev.txt；
+# 完整闭包（含传递依赖精确版本）见 requirements.lock.txt。
+#
+# 作者: 晨星
+pydantic==2.13.5
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn==0.53.0
+httpx==0.28.1
+loguru==0.7.3
+anyio==4.15.1
+python-dotenv==1.2.3
+PyYAML==6.0.3

@@ -1,0 +1,20 @@
+# 生产级加速器（可选，全部有 Windows/Linux 预编译轮子，不需要 torch / GPU）。
+# 装完后通过环境变量切换：
+#   DIALECTICA_EMBEDDING_BACKEND=fastembed
+#   DIALECTICA_VECTOR_BACKEND=faiss
+#   DIALECTICA_RERANK_BACKEND=cross-encoder
+#   DIALECTICA_LLM_BACKEND=llamacpp   DIALECTICA_GGUF_PATH=<本地模型路径>
+#
+# 作者: 晨星
+-r requirements.txt
+
+# 向量索引（大语料用 IndexFlatIP，精确内积）
+faiss-cpu==1.15.0
+# ONNX 嵌入与交叉编码器重排，无需 torch
+fastembed==0.8.0
+# 词法检索基准实现（本仓库默认使用自研 Robertson BM25，此包仅作大语料对照）
+rank-bm25==0.2.2
+# 本地 GGUF 推理（llama.cpp 绑定）
+llama-cpp-python==0.3.19
+# PDF 摄取
+pypdf==6.18.1
