@@ -9,12 +9,12 @@
 -r requirements.txt
 
 # 向量索引（大语料用 IndexFlatIP，精确内积）
-faiss-cpu==1.15.0
+faiss-cpu==1.15.1
 # ONNX 嵌入与交叉编码器重排，无需 torch
 fastembed==0.8.0
 # 词法检索基准实现（本仓库默认使用自研 Robertson BM25，此包仅作大语料对照）
 rank-bm25==0.2.2
 # 本地 GGUF 推理（llama.cpp 绑定）
-llama-cpp-python==0.3.19
+llama-cpp-python==0.3.35
 # PDF 摄取
-pypdf==6.18.1
+pypdf==6.19.0
