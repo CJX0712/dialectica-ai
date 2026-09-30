@@ -2,4 +2,4 @@
 # 作者: 晨星
 -r requirements.txt
 pytest==8.4.2
-ruff==0.16.8
+ruff==0.16.9
